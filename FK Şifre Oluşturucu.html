@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FK Şifre – Güçlü Parola Oluşturucu</title>
+  
+  <!-- Inter Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN (browser build) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <style>
+    :root{
+      --bg: #0e1310;
+      --panel: #121a16;
+      --muted: #7aa48719; /* subtle borders */
+      --text: #e9f3ed;
+      --subtext: #b8c8c0;
+      --accent: #1DB954;
+      --accent-600: #17a348;
+      --accent-700: #158c3e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --ok: #22c55e;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* Custom range slider */
+    input[type="range"] { -webkit-appearance: none; appearance: none; height: 6px; width: 100%; background: #25322b; border-radius: 999px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid #0a0f0c; box-shadow: 0 0 0 4px rgba(29,185,84,0.15); cursor: pointer; }
+    input[type="range"]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--accent); border: 2px solid #0a0f0c; box-shadow: 0 0 0 4px rgba(29,185,84,0.15); cursor: pointer; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--accent) var(--fill, 0%), #25322b var(--fill, 0%)); }
+    input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    /* Strength bar */
+    .strength-bar { height: 10px; width: 100%; background: #1a231e; border-radius: 999px; overflow: hidden; }
+    .strength-bar > .fill { height: 100%; width: 0%; transition: width 200ms ease, background-color 200ms ease; }
+
+    /* Toasts */
+    .toast { animation: toast-in 120ms ease-out; }
+    @keyframes toast-in { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; border-radius: .7rem; border: 1px solid transparent; transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease; }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary { background: var(--accent); color: #06220f; }
+    .btn-primary:hover { background: var(--accent-600); }
+    .btn-primary:active { background: var(--accent-700); }
+    .btn-ghost { background: #151f1a; color: var(--text); border-color: #233129; }
+    .btn-ghost:hover { background: #17251e; }
+    .btn-ghost:disabled, .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+    .input { background: #0b120e; border: 1px solid #223228; color: var(--text); border-radius: .75rem; }
+    .input:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(29,185,84,0.12); }
+
+    /* Checkbox custom (keeping native for accessibility) */
+    .opt-check { accent-color: var(--accent); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="px-6 pt-8 pb-4">
+    <div class="max-w-3xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-xl bg-[var(--accent)] text-[#06220f] flex items-center justify-center shadow">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">FK Şifre</h1>
+          <p class="text-sm text-[var(--subtext)]">Güçlü parola oluşturucu</p>
+        </div>
+      </div>
+      <a class="hidden sm:inline-flex items-center gap-2 text-[var(--subtext)] hover:text-[var(--text)] transition-colors" href="#" aria-label="Gizlilik: Verileriniz cihazınızda kalır" title="Gizlilik: Verileriniz cihazınızda kalır">
+        <i class="fa-solid fa-lock"></i>
+        <span>Yerelde çalışır</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="px-6 pb-24">
+    <section class="max-w-3xl mx-auto bg-[var(--panel)]/80 rounded-2xl border border-[var(--muted)] p-5 sm:p-8 shadow-xl">
+      <!-- Password preview -->
+      <div class="space-y-3">
+        <label for="pwd" class="text-sm text-[var(--subtext)]">Parola</label>
+        <div class="input flex items-stretch p-2 sm:p-3 gap-2">
+          <input id="pwd" class="flex-1 bg-transparent outline-none text-lg sm:text-2xl font-semibold tracking-wider select-all" type="text" readonly value="" aria-label="Oluşturulan parola" />
+          <button id="copyBtn" class="btn btn-ghost px-3 sm:px-4" aria-label="Parolayı kopyala">
+            <i class="fa-solid fa-copy"></i>
+            <span class="hidden sm:inline">Kopyala</span>
+          </button>
+          <button id="regenBtn" class="btn btn-primary px-3 sm:px-4" aria-label="Yeni parola oluştur">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span class="hidden sm:inline">Yenile</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Strength -->
+      <div class="mt-6 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div class="strength-bar" aria-hidden="true"><div id="strengthFill" class="fill"></div></div>
+        <div class="text-sm text-right"><span class="text-[var(--subtext)]">Güç:</span> <strong id="strengthLabel">-</strong></div>
+      </div>
+
+      <!-- Options -->
+      <div class="mt-8 grid gap-6">
+        <!-- Length -->
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2 text-[var(--subtext)]">
+              <i class="fa-solid fa-sliders"></i>
+              <span>Uzunluk</span>
+            </div>
+            <div class="text-sm"><span id="lenVal" class="font-semibold">16</span> karakter</div>
+          </div>
+          <input id="len" type="range" min="6" max="64" value="16" aria-label="Parola uzunluğu" />
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-[var(--muted)] bg-[#0b120e]/60 cursor-pointer select-none">
+            <input id="optUpper" class="opt-check" type="checkbox" checked />
+            <span class="flex-1">
+              <span class="font-semibold">Büyük harfler</span>
+              <span class="text-[var(--subtext)] ml-1">(A–Z)</span>
+            </span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-[var(--muted)] bg-[#0b120e]/60 cursor-pointer select-none">
+            <input id="optLower" class="opt-check" type="checkbox" checked />
+            <span class="flex-1">
+              <span class="font-semibold">Küçük harfler</span>
+              <span class="text-[var(--subtext)] ml-1">(a–z)</span>
+            </span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-[var(--muted)] bg-[#0b120e]/60 cursor-pointer select-none">
+            <input id="optNums" class="opt-check" type="checkbox" checked />
+            <span class="flex-1">
+              <span class="font-semibold">Rakamlar</span>
+              <span class="text-[var(--subtext)] ml-1">(0–9)</span>
+            </span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-xl border border-[var(--muted)] bg-[#0b120e]/60 cursor-pointer select-none">
+            <input id="optSyms" class="opt-check" type="checkbox" checked />
+            <span class="flex-1">
+              <span class="font-semibold">Semboller</span>
+              <span class="text-[var(--subtext)] ml-1">(!@#$…)</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <p class="mt-6 text-xs text-[var(--subtext)] leading-relaxed">
+        İpucu: Parolanız burada, tarayıcınızda üretilir. Hiçbir yere gönderilmez.
+      </p>
+    </section>
+  </main>
+
+  <!-- Toast container -->
+  <div id="toasts" class="fixed right-4 bottom-4 z-50 space-y-2"></div>
+
+  <script>
+    // Character sets
+    const SETS = {
+      upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+      lower: 'abcdefghijklmnopqrstuvwxyz',
+      nums: '0123456789',
+      syms: "!@#$%^&*()-_=+[]{};:'\"\\|,.<>/?`~"
+    };
+
+    // DOM elements
+    const el = {
+      pwd: document.getElementById('pwd'),
+      copy: document.getElementById('copyBtn'),
+      regen: document.getElementById('regenBtn'),
+      len: document.getElementById('len'),
+      lenVal: document.getElementById('lenVal'),
+      upper: document.getElementById('optUpper'),
+      lower: document.getElementById('optLower'),
+      nums: document.getElementById('optNums'),
+      syms: document.getElementById('optSyms'),
+      strengthFill: document.getElementById('strengthFill'),
+      strengthLabel: document.getElementById('strengthLabel'),
+      toasts: document.getElementById('toasts'),
+    };
+
+    // Utility: secure random int [0, max)
+    function rand(max) {
+      if (max <= 0) return 0;
+      const array = new Uint32Array(1);
+      let x;
+      // Rejection sampling to avoid modulo bias
+      const limit = Math.floor(0xFFFFFFFF / max) * max;
+      do {
+        crypto.getRandomValues(array);
+        x = array[0];
+      } while (x >= limit);
+      return x % max;
+    }
+
+    function pick(str) { return str.charAt(rand(str.length)); }
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = rand(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function selectedSets() {
+      const s = [];
+      if (el.upper.checked) s.push(SETS.upper);
+      if (el.lower.checked) s.push(SETS.lower);
+      if (el.nums.checked) s.push(SETS.nums);
+      if (el.syms.checked) s.push(SETS.syms);
+      return s;
+    }
+
+    function generatePassword() {
+      const length = parseInt(el.len.value, 10);
+      const sets = selectedSets();
+      if (sets.length === 0) return '';
+
+      // Ensure at least one char from each selected set
+      const chars = [];
+      for (const s of sets) chars.push(pick(s));
+
+      const pool = sets.join('');
+      for (let i = chars.length; i < length; i++) chars.push(pick(pool));
+
+      return shuffle(chars).join('');
+    }
+
+    function scorePassword(pw) {
+      if (!pw) return { score: 0, label: 'Seçenek bekleniyor', color: '#33443a', pct: 0 };
+      const length = pw.length;
+      // Length points: up to 6
+      const lenPts = Math.min(6, Math.floor(length / 3));
+      // Variety points
+      const v = [el.upper.checked, el.lower.checked, el.nums.checked, el.syms.checked].filter(Boolean).length;
+      let varPts = v; // 0..4
+      if (v === 1) varPts = Math.max(0, varPts - 1); // penalize single-type
+
+      // Extra bonus for long and varied
+      const bonus = (length >= 16 && v >= 3) ? 1 : 0;
+
+      const total = Math.min(11, lenPts + varPts + bonus); // cap
+      let label = 'Zayıf', color = '#ef4444', pct = 20;
+      if (total >= 9) { label = 'Çok Güçlü'; color = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#1DB954'; pct = 100; }
+      else if (total >= 7) { label = 'Güçlü'; color = '#22c55e'; pct = 75; }
+      else if (total >= 4) { label = 'Orta'; color = '#f59e0b'; pct = 50; }
+      else { label = 'Zayıf'; color = '#ef4444'; pct = 25; }
+      return { score: total, label, color, pct };
+    }
+
+    function updateStrength(pw) {
+      const { label, color, pct } = scorePassword(pw);
+      el.strengthLabel.textContent = label;
+      el.strengthFill.style.width = pct + '%';
+      el.strengthFill.style.backgroundColor = color;
+    }
+
+    function setRangeFill() {
+      const min = parseInt(el.len.min, 10);
+      const max = parseInt(el.len.max, 10);
+      const val = parseInt(el.len.value, 10);
+      const pct = ((val - min) / (max - min)) * 100;
+      el.len.style.setProperty('--fill', pct + '%');
+    }
+
+    function refresh() {
+      const pw = generatePassword();
+      el.pwd.value = pw;
+      updateStrength(pw);
+      const disabled = pw.length === 0;
+      el.copy.disabled = disabled;
+      el.regen.disabled = selectedSets().length === 0; // disable regen if none selected
+    }
+
+    function showToast(message, type = 'ok') {
+      const wrap = document.createElement('div');
+      wrap.className = 'toast';
+      const bg = type === 'ok' ? '#13251b' : (type === 'warn' ? '#251f13' : '#251415');
+      const bd = type === 'ok' ? '#214232' : (type === 'warn' ? '#4a3f22' : '#4a2222');
+      const ic = type === 'ok' ? 'fa-circle-check' : (type === 'warn' ? 'fa-circle-exclamation' : 'fa-circle-xmark');
+      const col = type === 'ok' ? 'var(--accent)' : (type === 'warn' ? 'var(--warn)' : 'var(--danger)');
+      wrap.innerHTML = `
+        <div style="background:${bg};border:1px solid ${bd}" class="rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg max-w-80">
+          <i class="fa-solid ${ic}" style="color:${col}"></i>
+          <div class="text-sm">${message}</div>
+          <button aria-label="Kapat" class="ml-auto text-[var(--subtext)] hover:text-[var(--text)]"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      `;
+      const node = wrap.firstElementChild;
+      const closer = node.querySelector('button');
+      closer.addEventListener('click', () => el.toasts.removeChild(wrap));
+      el.toasts.appendChild(wrap);
+      setTimeout(() => { if (wrap.isConnected) el.toasts.removeChild(wrap); }, 2800);
+    }
+
+    // Events
+    el.len.addEventListener('input', () => {
+      el.lenVal.textContent = el.len.value;
+      setRangeFill();
+      refresh(); // real-time
+    });
+
+    for (const cb of [el.upper, el.lower, el.nums, el.syms]) {
+      cb.addEventListener('change', refresh);
+    }
+
+    el.regen.addEventListener('click', () => {
+      if (selectedSets().length === 0) {
+        showToast('En az bir seçenek işaretlenmeli.', 'warn');
+        return;
+      }
+      refresh();
+      showToast('Yeni parola oluşturuldu.', 'ok');
+    });
+
+    el.copy.addEventListener('click', async () => {
+      const text = el.pwd.value;
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Parola panoya kopyalandı.');
+      } catch (e) {
+        // Fallback
+        try {
+          el.pwd.select();
+          document.execCommand('copy');
+          showToast('Parola panoya kopyalandı.');
+        } catch (err) {
+          showToast('Kopyalama başarısız oldu.', 'err');
+        }
+      }
+    });
+
+    // Keyboard: Enter regenerates, Ctrl/Cmd+C copies as usual
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!el.regen.disabled) el.regen.click();
+      }
+    });
+
+    // Initial render
+    setRangeFill();
+    refresh();
+  </script>
+</body>
+</html>
