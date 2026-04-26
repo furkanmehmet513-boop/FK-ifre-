@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FK Şifre</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style type="text/tailwindcss">
+        @theme {
+            --font-sans: 'Inter', sans-serif;
+            --color-bg-primary: #0e1310;
+            --color-bg-secondary: #141a16;
+            --color-bg-tertiary: #1a211c;
+            --color-bg-elevated: #1f2822;
+            --color-bg-hover: #252f28;
+            --color-accent: #1DB954;
+            --color-accent-hover: #1ed760;
+            --color-accent-dim: #169c45;
+            --color-accent-glow: rgba(29, 185, 84, 0.15);
+            --color-accent-glow-strong: rgba(29, 185, 84, 0.3);
+            --color-text-primary: #e8ece9;
+            --color-text-secondary: #9ba8a0;
+            --color-text-muted: #5e6e64;
+            --color-border: #232d27;
+            --color-border-hover: #2d3a32;
+            --color-danger: #e74c3c;
+            --color-danger-hover: #ff5e4d;
+            --color-danger-bg: rgba(231, 76, 60, 0.1);
+            --color-warning: #f1c40f;
+            --color-info: #3498db;
+            --color-success: #1DB954;
+        }
+    </style>
+    <style>
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e1310;
+            color: #e8ece9;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0e1310; }
+        ::-webkit-scrollbar-thumb { background: #232d27; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2d3a32; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes toastSlide {
+            from { opacity: 0; transform: translateX(100%) scale(0.9); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        @keyframes toastFadeOut {
+            from { opacity: 1; transform: translateX(0) scale(1); }
+            to { opacity: 0; transform: translateX(100%) scale(0.9); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(29, 185, 84, 0.25); }
+            50% { box-shadow: 0 0 0 10px rgba(29, 185, 84, 0); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes modalBackdropIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes modalContentIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .anim-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .anim-fade-in { animation: fadeIn 0.4s ease forwards; }
+        .anim-slide-right { animation: slideInRight 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .anim-scale-in { animation: scaleIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .anim-toast { animation: toastSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .anim-toast-out { animation: toastFadeOut 0.3s ease forwards; }
+        .anim-shake { animation: shake 0.4s ease; }
+        .anim-float { animation: float 4s ease-in-out infinite; }
+        .anim-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
+        .anim-modal-backdrop { animation: modalBackdropIn 0.2s ease forwards; }
+        .anim-modal-content { animation: modalContentIn 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+        .delay-1 { animation-delay: 0.05s; opacity: 0; }
+        .delay-2 { animation-delay: 0.1s; opacity: 0; }
+        .delay-3 { animation-delay: 0.15s; opacity: 0; }
+        .delay-4 { animation-delay: 0.2s; opacity: 0; }
+
+        .entry-card {
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .entry-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: inherit;
+            border: 1px solid transparent;
+            transition: border-color 0.3s ease;
+            pointer-events: none;
+        }
+        .entry-card:hover::before { border-color: #2d3a32; }
+
+        /* Password Generator Styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            width: 100%;
+            background: #25322b;
+            border-radius: 999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1DB954;
+            border: 2px solid #0a0f0c;
+            box-shadow: 0 0 0 4px rgba(29,185,84,0.15);
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #1DB954;
+            border: 2px solid #0a0f0c;
+            box-shadow: 0 0 0 4px rgba(29,185,84,0.15);
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #1DB954 var(--fill, 0%), #25322b var(--fill, 0%));
+        }
+        input[type="range"]:focus-visible {
+            outline: 2px solid #1DB954;
+            outline-offset: 2px;
+        }
+
+        .strength-bar {
+            height: 10px;
+            width: 100%;
+            background: #1a231e;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .strength-bar > .fill {
+            height: 100%;
+            width: 0%;
+            transition: width 200ms ease, background-color 200ms ease;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            border-radius: 0.7rem;
+            border: 1px solid transparent;
+            transition: transform 120ms ease, background-color 120ms ease, border-color 120ms ease;
+            cursor: pointer;
+        }
+        .btn:active { transform: translateY(1px); }
+        .btn-primary {
+            background: #1DB954;
+            color: #06220f;
+        }
+        .btn-primary:hover { background: #17a348; }
+        .btn-primary:active { background: #158c3e; }
+        .btn-ghost {
+            background: #151f1a;
+            color: #e9f3ed;
+            border-color: #233129;
+        }
+        .btn-ghost:hover { background: #17251e; }
+        .btn-ghost:disabled, .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .input-gen {
+            background: #0b120e;
+            border: 1px solid #223228;
+            color: #e9f3ed;
+            border-radius: 0.75rem;
+        }
+        .input-gen:focus-within {
+            border-color: #1DB954;
+            box-shadow: 0 0 0 4px rgba(29,185,84,0.12);
+        }
+
+        .opt-check { accent-color: #1DB954; }
+
+        .toast {
+            animation: toastSlide 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .modal-backdrop {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .password-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #9ba8a0;
+            border-radius: 50%;
+            margin: 0 1px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Setup Screen -->
+    <div id="setupScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md anim-fade-in-up">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-[#1DB954] text-[#06220f] flex items-center justify-center mx-auto mb-4 shadow-lg anim-float">
+                    <i class="fa-solid fa-shield-halved text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight mb-2">FK Şifre Kaydet</h1>
+                <p class="text-[#9ba8a0]">Güvenli Şifre Yöneticisi</p>
+            </div>
+            <div class="bg-[#141a16] rounded-2xl border border-[#232d27] p-6 sm:p-8 shadow-xl">
+                <h2 class="text-xl font-bold mb-1">Hoş Geldiniz</h2>
+                <p class="text-sm text-[#9ba8a0] mb-6">Kasanızı kurmak için bilgileri doldurun</p>
+                <form id="setupForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Ana Şifre</label>
+                        <input type="password" id="setupMasterPassword" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                            placeholder="Güçlü bir ana şifre belirleyin">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Ana Şifre (Tekrar)</label>
+                        <input type="password" id="setupMasterPasswordConfirm" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                            placeholder="Ana şifrenizi tekrar girin">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Gizli Hayvan (Kurtarma Sorusu)</label>
+                        <input type="text" id="setupSecretAnimal" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                            placeholder="Örn: kedi, köpek, aslan">
+                        <p class="text-xs text-[#5e6e64] mt-1.5">Şifrenizi unutursanız bu cevapla kurtarabilirsiniz.</p>
+                    </div>
+                    <button type="submit" class="w-full bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-3 rounded-xl transition-all active:scale-[0.98] mt-2">
+                        Kasayı Kur
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lock Screen -->
+    <div id="lockScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md anim-fade-in-up">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-[#1a211c] border border-[#232d27] text-[#1DB954] flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-lock text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight mb-2">Kasa Kilitli</h1>
+                <p class="text-[#9ba8a0]">Şifrelerinize erişmek için ana şifrenizi girin</p>
+            </div>
+            <div class="bg-[#141a16] rounded-2xl border border-[#232d27] p-6 sm:p-8 shadow-xl">
+                <form id="unlockForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Ana Şifre</label>
+                        <input type="password" id="unlockPassword" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                            placeholder="Ana şifrenizi girin">
+                    </div>
+                    <button type="submit" class="w-full bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-3 rounded-xl transition-all active:scale-[0.98]">
+                        Kilidi Aç
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button type="button" id="forgotPasswordBtn" class="text-sm text-[#9ba8a0] hover:text-[#e8ece9] transition-colors">
+                        Şifremi Unuttum
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recovery Screen -->
+    <div id="recoveryScreen" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md anim-fade-in-up">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-[#1a211c] border border-[#232d27] text-[#f1c40f] flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-key text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-extrabold tracking-tight mb-2">Şifre Kurtarma</h1>
+                <p class="text-[#9ba8a0]">Kurtarma için gizli hayvanınızı girin</p>
+            </div>
+            <div class="bg-[#141a16] rounded-2xl border border-[#232d27] p-6 sm:p-8 shadow-xl">
+                <div id="recoveryStep1">
+                    <form id="recoveryForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Gizli Hayvanınız</label>
+                            <input type="text" id="recoveryAnimal" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="Gizli hayvanınızı girin">
+                        </div>
+                        <button type="submit" class="w-full bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-3 rounded-xl transition-all active:scale-[0.98]">
+                            Doğrula
+                        </button>
+                    </form>
+                    <div class="mt-4 text-center">
+                        <button type="button" id="backToLockBtn" class="text-sm text-[#9ba8a0] hover:text-[#e8ece9] transition-colors">
+                            Geri Dön
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="recoveryStep2" class="hidden space-y-4">
+                    <div class="p-3 bg-[#1f2822] border border-[#1DB954]/30 rounded-xl text-sm text-[#1DB954]">
+                        <i class="fa-solid fa-circle-check mr-2"></i>Doğrulama başarılı! Yeni ana şifre ve gizli hayvan belirleyin.
+                    </div>
+                    <form id="resetPasswordForm" class="space-y-4">
+                            <label class="block text-sm font-medium mb-1.5">Yeni Ana Şifre</label>
+                            <input type="password" id="newMasterPassword" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="Yeni ana şifrenizi girin">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Yeni Ana Şifre (Tekrar)</label>
+                            <input type="password" id="newMasterPasswordConfirm" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="Yeni ana şifreyi tekrar girin">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Yeni Gizli Hayvan (Kurtarma Sorusu)</label>
+                            <input type="text" id="newSecretAnimal" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="Örn: kedi, köpek, aslan">
+                        </div>
+                        <button type="submit" class="w-full bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-3 rounded-xl transition-all active:scale-[0.98]">
+                            Ana Şifreyi Sıfırla
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-[#0e1310]/90 backdrop-blur-md border-b border-[#232d27]">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#1DB954] text-[#06220f] flex items-center justify-center shadow">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight leading-tight">FK Şifre Kaydet</h1>
+                        <p class="text-xs text-[#9ba8a0]">Güvenli Şifre Yöneticisi</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+    <button type="button" id="navGeneratorBtn" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#141a16] border border-[#232d27] text-sm text-[#9ba8a0] hover:text-[#e8ece9] hover:border-[#2d3a32] transition-all" title="Şifre Oluşturucu">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span class="hidden md:inline">Oluşturucu</span>
+    </button>
+    <button type="button" id="backupBtn" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#141a16] border border-[#232d27] text-sm text-[#9ba8a0] hover:text-[#1DB954] hover:border-[#2d3a32] transition-all" title="Yedekle">
+        <i class="fa-solid fa-download"></i>
+        <span class="hidden md:inline">Yedekle</span>
+    </button>
+    <button type="button" id="restoreBtn" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#141a16] border border-[#232d27] text-sm text-[#9ba8a0] hover:text-[#f1c40f] hover:border-[#2d3a32] transition-all" title="Yedekten Yükle">
+        <i class="fa-solid fa-upload"></i>
+        <span class="hidden md:inline">Yükle</span>
+    </button>
+    <input type="file" id="restoreFileInput" accept=".fkbackup,.json" class="hidden">
+    <button type="button" id="lockBtn" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#141a16] border border-[#232d27] text-sm text-[#9ba8a0] hover:text-[#e8ece9] hover:border-[#2d3a32] transition-all" title="Kilitle">
+        <i class="fa-solid fa-lock"></i>
+        <span class="hidden md:inline">Kilit</span>
+    </button>
+</div>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            <!-- Add Entry Form -->
+            <section class="bg-[#141a16] rounded-2xl border border-[#232d27] p-5 sm:p-6 shadow-lg anim-fade-in-up">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-[#1f2822] border border-[#232d27] flex items-center justify-center text-[#1DB954]">
+                        <i class="fa-solid fa-plus text-sm"></i>
+                    </div>
+                    <h2 class="text-lg font-bold">Yeni Kayıt Ekle</h2>
+                    <span class="text-xs text-[#5e6e64] ml-auto">Yeni bir site veya uygulama şifresi kaydedin</span>
+                </div>
+                <form id="addEntryForm" class="space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Site / Uygulama Adı</label>
+                            <input type="text" id="entryPlatform" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="Örn: Google, Instagram">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1.5">Kullanıcı Adı / E-posta</label>
+                            <input type="text" id="entryUsername" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all"
+                                placeholder="kullanici@ornek.com">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Şifre</label>
+                        <div class="flex gap-2">
+                            <div class="flex-1 relative">
+                                <input type="password" id="entryPassword" required
+                                    class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all pr-10"
+                                    placeholder="Şifrenizi girin">
+                                <button type="button" id="toggleEntryPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#5e6e64] hover:text-[#9ba8a0] transition-colors">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                            </div>
+                            <button type="button" id="openGeneratorBtn"
+                                class="shrink-0 bg-[#1f2822] hover:bg-[#252f28] border border-[#232d27] text-[#1DB954] font-semibold px-4 py-3 rounded-xl transition-all active:scale-[0.98] flex items-center gap-2">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                <span class="hidden sm:inline">Güçlü Şifre Oluştur</span>
+                            </button>
+                        </div>
+                        <div id="entryStrengthContainer" class="mt-2 hidden">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-xs text-[#5e6e64]">Şifre gücü</span>
+                                <span id="entryStrengthText" class="text-xs font-medium">-</span>
+                            </div>
+                            <div class="strength-bar">
+                                <div id="entryStrengthBar" class="fill rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 pt-1">
+                        <button type="submit" class="bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold px-6 py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Kaydet
+                        </button>
+                        <button type="button" id="clearFormBtn" class="text-sm text-[#5e6e64] hover:text-[#9ba8a0] transition-colors">
+                            Temizle
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Entries List -->
+            <section>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-[#1f2822] border border-[#232d27] flex items-center justify-center text-[#1DB954]">
+                            <i class="fa-solid fa-list text-sm"></i>
+                        </div>
+                        <h2 class="text-lg font-bold">Kayıtlı Şifreler</h2>
+                        <span id="entryCount" class="text-xs bg-[#1f2822] border border-[#232d27] text-[#9ba8a0] px-2 py-0.5 rounded-full">0 kayıt</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[#5e6e64] text-sm"></i>
+                        <input type="text" id="searchInput"
+                            class="bg-[#141a16] border border-[#232d27] rounded-xl pl-9 pr-4 py-2 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all w-40 sm:w-56"
+                            placeholder="Ara...">
+                    </div>
+                </div>
+                <div id="entriesList" class="space-y-3">
+                    <!-- Entries will be rendered here -->
+                </div>
+                <div id="emptyState" class="hidden text-center py-16">
+                    <div class="w-16 h-16 rounded-2xl bg-[#1a211c] border border-[#232d27] flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-folder-open text-2xl text-[#5e6e64]"></i>
+                    </div>
+                    <p class="text-[#9ba8a0] text-sm">Henüz kayıt bulunmuyor</p>
+                    <p class="text-[#5e6e64] text-xs mt-1">Yukarıdan yeni bir şifre ekleyin</p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="max-w-5xl mx-auto px-4 sm:px-6 py-6 text-center">
+            <p class="text-xs text-[#5e6e64]">Tüm veriler tarayıcınızda AES şifreleme ile güvenle saklanır</p>
+            <p class="text-xs text-[#5e6e64] mt-1">FK Şifre Kaydet v1.1</p>
+        </footer>
+    </div>
+
+    <!-- Password Generator Modal -->
+    <div id="generatorModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div id="generatorBackdrop" class="modal-backdrop absolute inset-0"></div>
+        <div id="generatorContent" class="relative bg-[#141a16] rounded-2xl border border-[#232d27] shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto anim-modal-content">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-5 sm:p-6 border-b border-[#232d27]">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-[#1DB954] text-[#06220f] flex items-center justify-center shadow">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-extrabold tracking-tight">FK Şifre</h2>
+                        <p class="text-xs text-[#9ba8a0]">Güçlü parola oluşturucu</p>
+                    </div>
+                </div>
+                <button type="button" id="closeModalBtn" class="w-8 h-8 rounded-lg bg-[#1a211c] border border-[#232d27] text-[#9ba8a0] hover:text-[#e8ece9] hover:border-[#2d3a32] flex items-center justify-center transition-all">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 sm:p-6 space-y-5">
+                <div class="flex items-center justify-center">
+                    <span class="inline-flex items-center gap-1.5 text-xs text-[#5e6e64] bg-[#1a211c] border border-[#232d27] px-3 py-1 rounded-full">
+                        <i class="fa-solid fa-lock text-[10px]"></i>
+                        Yerelde çalışır
+                    </span>
+                </div>
+
+                <!-- Password Preview -->
+                <div class="space-y-2">
+                    <label for="pwd" class="text-sm text-[#9ba8a0]">Parola</label>
+                    <div class="input-gen flex items-center p-2 sm:p-3 gap-1.5 overflow-hidden w-full box-border">
+                        <input id="pwd" class="flex-1 min-w-0 bg-transparent outline-none text-base sm:text-lg font-semibold tracking-wider select-all text-ellipsis" type="text" readonly value="" aria-label="Oluşturulan parola">
+                        <button type="button" id="copyBtn" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-[#151f1a] border border-[#233129] text-[#9ba8a0] hover:text-[#e8ece9] hover:border-[#2d3a32] transition-all" aria-label="Parolayı kopyala">
+                            <i class="fa-solid fa-copy text-xs"></i>
+                        </button>
+                        <button type="button" id="regenBtn" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-[#151f1a] border border-[#233129] text-[#9ba8a0] hover:text-[#e8ece9] hover:border-[#2d3a32] transition-all" aria-label="Yeni parola oluştur">
+                            <i class="fa-solid fa-rotate text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Strength -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-[#9ba8a0]">Güç: <span id="strengthLabel" class="font-semibold text-[#e8ece9]">-</span></span>
+                        <span id="strengthPercent" class="text-xs text-[#5e6e64]">0%</span>
+                    </div>
+                    <div class="strength-bar">
+                        <div id="strengthFill" class="fill rounded-full"></div>
+                    </div>
+                </div>
+
+                <!-- Length -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-sm font-medium">Uzunluk</label>
+                        <span id="lengthValue" class="text-sm text-[#9ba8a0]">16 karakter</span>
+                    </div>
+                    <input type="range" id="lengthSlider" min="4" max="64" value="16" aria-label="Parola uzunluğu">
+                </div>
+
+                <!-- Options -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-[#0e1310] border border-[#232d27] cursor-pointer hover:border-[#2d3a32] transition-all">
+                        <input type="checkbox" id="optUpper" checked class="opt-check w-4 h-4 rounded">
+                        <div>
+                            <div class="text-sm font-medium">Büyük harfler</div>
+                            <div class="text-xs text-[#5e6e64]">(A–Z)</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-[#0e1310] border border-[#232d27] cursor-pointer hover:border-[#2d3a32] transition-all">
+                        <input type="checkbox" id="optLower" checked class="opt-check w-4 h-4 rounded">
+                        <div>
+                            <div class="text-sm font-medium">Küçük harfler</div>
+                            <div class="text-xs text-[#5e6e64]">(a–z)</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-[#0e1310] border border-[#232d27] cursor-pointer hover:border-[#2d3a32] transition-all">
+                        <input type="checkbox" id="optNumber" checked class="opt-check w-4 h-4 rounded">
+                        <div>
+                            <div class="text-sm font-medium">Rakamlar</div>
+                            <div class="text-xs text-[#5e6e64]">(0–9)</div>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-[#0e1310] border border-[#232d27] cursor-pointer hover:border-[#2d3a32] transition-all">
+                        <input type="checkbox" id="optSymbol" checked class="opt-check w-4 h-4 rounded">
+                        <div>
+                            <div class="text-sm font-medium">Semboller</div>
+                            <div class="text-xs text-[#5e6e64]">(!@#$…)</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Save and Return Button (only in modal mode) -->
+                <button type="button" id="saveAndReturnBtn" class="hidden w-full btn btn-primary justify-center py-3 text-base">
+                    <i class="fa-solid fa-check"></i>
+                    Kaydet ve Geri Dön
+                </button>
+
+                <p class="text-xs text-[#5e6e64] text-center">
+                    <i class="fa-solid fa-circle-info mr-1"></i>
+                    İpucu: Parolanız burada, tarayıcınızda üretilir. Hiçbir yere gönderilmez.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" onclick="closeEditModal()"></div>
+        <div class="relative bg-[#141a16] rounded-2xl border border-[#232d27] shadow-2xl w-full max-w-md anim-scale-in">
+            <div class="p-5 sm:p-6">
+                <h3 class="text-lg font-bold mb-4">Kaydı Düzenle</h3>
+                <form id="editForm" class="space-y-4">
+                    <input type="hidden" id="editId">
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Site / Uygulama Adı</label>
+                        <input type="text" id="editPlatform" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Kullanıcı Adı / E-posta</label>
+                        <input type="text" id="editUsername" required
+                            class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1.5">Şifre</label>
+                        <div class="relative">
+                            <input type="password" id="editPassword" required
+                                class="w-full bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#1DB954] focus:ring-1 focus:ring-[#1DB954]/30 transition-all pr-10">
+                            <button type="button" onclick="toggleEditPassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#5e6e64] hover:text-[#9ba8a0] transition-colors">
+                                <i class="fa-solid fa-eye" id="editEyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 pt-2">
+                        <button type="button" onclick="closeEditModal()" class="flex-1 bg-[#1a211c] hover:bg-[#1f2822] border border-[#232d27] text-[#9ba8a0] font-semibold py-2.5 rounded-xl transition-all">
+                            İptal
+                        </button>
+                        <button type="submit" class="flex-1 bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98]">
+                            Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- Backup Modal -->
+<div id="backupModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeBackupModal()"></div>
+    <div class="relative bg-[#141a16] rounded-2xl border border-[#232d27] shadow-2xl w-full max-w-lg anim-scale-in">
+        <div class="p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#1DB954] text-[#06220f] flex items-center justify-center shadow">
+                    <i class="fa-solid fa-download text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold">Yedekleme</h3>
+                    <p class="text-xs text-[#9ba8a0]">Yedek metnini kopyalayıp güvenli bir yere kaydedin</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <textarea id="backupTextArea" readonly
+                    class="w-full h-48 bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-xs font-mono text-[#e8ece9] focus:outline-none resize-none select-all"></textarea>
+                
+                <div class="flex items-center gap-3">
+                    <button type="button" id="copyBackupBtn" class="flex-1 bg-[#1DB954] hover:bg-[#1ed760] text-[#06220f] font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i>
+                        Panoya Kopyala
+                    </button>
+                    <button type="button" id="downloadBackupBtn" class="flex-1 bg-[#1f2822] hover:bg-[#252f28] border border-[#232d27] text-[#e8ece9] font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        İndir (Dene)
+                    </button>
+                </div>
+                
+                <button type="button" onclick="closeBackupModal()" class="w-full bg-[#1a211c] hover:bg-[#1f2822] border border-[#232d27] text-[#9ba8a0] font-semibold py-2.5 rounded-xl transition-all">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Modal -->
+<div id="restoreModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="modal-backdrop absolute inset-0" onclick="closeRestoreModal()"></div>
+    <div class="relative bg-[#141a16] rounded-2xl border border-[#232d27] shadow-2xl w-full max-w-lg anim-scale-in">
+        <div class="p-5 sm:p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#f1c40f] text-[#0e1310] flex items-center justify-center shadow">
+                    <i class="fa-solid fa-upload text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold">Yedekten Yükle</h3>
+                    <p class="text-xs text-[#9ba8a0]">Yedek metnini buraya yapıştırın</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <textarea id="restoreTextArea"
+                    class="w-full h-48 bg-[#0e1310] border border-[#232d27] rounded-xl px-4 py-3 text-xs font-mono text-[#e8ece9] focus:outline-none focus:border-[#f1c40f] focus:ring-1 focus:ring-[#f1c40f]/30 transition-all resize-none"
+                    placeholder="Yedek metnini buraya yapıştırın..."></textarea>
+                
+                <div class="flex items-center gap-3">
+                    <button type="button" id="confirmRestoreBtn" class="flex-1 bg-[#f1c40f] hover:bg-[#f7dc6f] text-[#0e1310] font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i>
+                        Yükle
+                    </button>
+                    <button type="button" id="restoreFromFileBtn" class="flex-1 bg-[#1f2822] hover:bg-[#252f28] border border-[#232d27] text-[#e8ece9] font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-folder-open"></i>
+                        Dosyadan Yükle
+                    </button>
+                </div>
+                
+                <button type="button" onclick="closeRestoreModal()" class="w-full bg-[#1a211c] hover:bg-[#1f2822] border border-[#232d27] text-[#9ba8a0] font-semibold py-2.5 rounded-xl transition-all">
+                    Kapat
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Delete Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-[#141a16] rounded-2xl border border-[#232d27] shadow-2xl w-full max-w-sm anim-scale-in">
+            <div class="p-5 sm:p-6 text-center">
+                <div class="w-12 h-12 rounded-full bg-[rgba(231,76,60,0.1)] border border-[rgba(231,76,60,0.2)] flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-triangle-exclamation text-[#e74c3c] text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">Kaydı Sil</h3>
+                <p class="text-sm text-[#9ba8a0] mb-6">Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="closeDeleteModal()" class="flex-1 bg-[#1a211c] hover:bg-[#1f2822] border border-[#232d27] text-[#9ba8a0] font-semibold py-2.5 rounded-xl transition-all">
+                        İptal
+                    </button>
+                    <button type="button" id="confirmDeleteBtn" class="flex-1 bg-[#e74c3c] hover:bg-[#ff5e4d] text-white font-semibold py-2.5 rounded-xl transition-all active:scale-[0.98]">
+                        Sil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== STATE =====================
+        let masterPassword = '';
+        let secretAnimal = '';
+        let entries = [];
+        let deleteId = null;
+        let modalReturnTarget = null;
+
+        const STORAGE_KEY = 'fk_sifre_data_v1';
+
+        // ===================== UTILS =====================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'border-[#1DB954]/30 text-[#1DB954]',
+                error: 'border-[#e74c3c]/30 text-[#e74c3c]',
+                warning: 'border-[#f1c40f]/30 text-[#f1c40f]',
+                info: 'border-[#3498db]/30 text-[#3498db]'
+            };
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
+            const color = colors[type] || colors['info'];
+const icon = icons[type] || icons['info'];
+toast.className = `toast pointer-events-auto flex items-center gap-3 bg-[#141a16] border ${color} rounded-xl px-4 py-3 shadow-lg text-sm`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icon}"></i>
+                <span class="text-[#e8ece9]">${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('toast');
+                toast.classList.add('anim-toast-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function encrypt(text, key) {
+            return CryptoJS.AES.encrypt(text, key).toString();
+        }
+
+        function decrypt(ciphertext, key) {
+            try {
+                const bytes = CryptoJS.AES.decrypt(ciphertext, key);
+                return bytes.toString(CryptoJS.enc.Utf8);
+            } catch {
+                return '';
+            }
+        }
+
+        function saveData() {
+            if (!masterPassword) return;
+            const data = {
+                secretAnimal: secretAnimal,
+                entries: entries.map(e => ({
+                    id: e.id,
+                    platform: encrypt(e.platform, masterPassword),
+                    username: encrypt(e.username, masterPassword),
+                    password: encrypt(e.password, masterPassword)
+                }))
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return false;
+            try {
+                const data = JSON.parse(raw);
+                secretAnimal = data.secretAnimal || '';
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        function loadEntries() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw || !masterPassword) return;
+            try {
+                const data = JSON.parse(raw);
+                entries = (data.entries || []).map(e => ({
+                    id: e.id,
+                    platform: decrypt(e.platform, masterPassword),
+                    username: decrypt(e.username, masterPassword),
+                    password: decrypt(e.password, masterPassword)
+                })).filter(e => e.platform && e.username);
+            } catch {
+                entries = [];
+            }
+        }
+
+        function fallbackCopy(text, successMsg = 'Kopyalandı!') {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; // Scroll sıçramasını önlemek için
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg, 'success');
+            } catch {
+                showToast('Kopyalama başarısız', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ===================== SCREENS =====================
+        function showScreen(name) {
+            document.getElementById('setupScreen').classList.add('hidden');
+            document.getElementById('lockScreen').classList.add('hidden');
+            document.getElementById('recoveryScreen').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById(name).classList.remove('hidden');
+        }
+
+        function checkSetup() {
+            const hasData = loadData();
+            if (!hasData) {
+                showScreen('setupScreen');
+            } else {
+                showScreen('lockScreen');
+            }
+        }
+
+        // ===================== SETUP =====================
+        document.getElementById('setupForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('setupMasterPassword').value;
+            const confirm = document.getElementById('setupMasterPasswordConfirm').value;
+            const animal = document.getElementById('setupSecretAnimal').value.trim();
+
+            if (pass !== confirm) {
+                showToast('Şifreler eşleşmiyor!', 'error');
+                return;
+            }
+            if (pass.length < 4) {
+                showToast('Ana şifre en az 4 karakter olmalı', 'error');
+                return;
+            }
+            if (!animal) {
+                showToast('Gizli hayvan boş bırakılamaz', 'error');
+                return;
+            }
+
+            masterPassword = pass;
+            secretAnimal = animal.toLowerCase();
+            entries = [];
+            saveData();
+            showToast('Kasa başarıyla kuruldu!', 'success');
+            showScreen('mainApp');
+            renderEntries();
+        });
+
+        // ===================== UNLOCK =====================
+        document.getElementById('unlockForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const pass = document.getElementById('unlockPassword').value;
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) {
+                showToast('Kasa bulunamadı', 'error');
+                return;
+            }
+            try {
+                const data = JSON.parse(raw);
+                const test = data.entries && data.entries[0];
+                if (test) {
+                    const decrypted = decrypt(test.platform, pass);
+                    if (!decrypted) throw new Error('Invalid password');
+                }
+                masterPassword = pass;
+                secretAnimal = data.secretAnimal || '';
+                loadEntries();
+                document.getElementById('unlockPassword').value = '';
+                showScreen('mainApp');
+                renderEntries();
+                showToast('Kasa açıldı', 'success');
+            } catch {
+                showToast('Yanlış ana şifre!', 'error');
+                document.getElementById('unlockForm').classList.add('anim-shake');
+                setTimeout(() => document.getElementById('unlockForm').classList.remove('anim-shake'), 400);
+            }
+        });
+
+        document.getElementById('forgotPasswordBtn').addEventListener('click', () => {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                try {
+                    const data = JSON.parse(raw);
+                    secretAnimal = data.secretAnimal || '';
+                } catch {}
+            }
+            showScreen('recoveryScreen');
+            document.getElementById('recoveryStep1').classList.remove('hidden');
+            document.getElementById('recoveryStep2').classList.add('hidden');
+        });
+
+        document.getElementById('backToLockBtn').addEventListener('click', () => {
+            showScreen('lockScreen');
+        });
+
+        // ===================== RECOVERY =====================
+        document.getElementById('recoveryForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const animal = document.getElementById('recoveryAnimal').value.trim().toLowerCase();
+            if (animal === secretAnimal) {
+                document.getElementById('recoveryStep1').classList.add('hidden');
+                document.getElementById('recoveryStep2').classList.remove('hidden');
+            } else {
+                showToast('Yanlış cevap!', 'error');
+                document.getElementById('recoveryForm').classList.add('anim-shake');
+                setTimeout(() => document.getElementById('recoveryForm').classList.remove('anim-shake'), 400);
+            }
+        });
+
+ document.getElementById('resetPasswordForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pass = document.getElementById('newMasterPassword').value;
+    const confirm = document.getElementById('newMasterPasswordConfirm').value;
+    const newAnimal = document.getElementById('newSecretAnimal').value.trim();
+    
+    if (pass !== confirm) {
+        showToast('Şifreler eşleşmiyor!', 'error');
+        return;
+    }
+    if (pass.length < 4) {
+        showToast('Ana şifre en az 4 karakter olmalı', 'error');
+        return;
+    }
+    if (!newAnimal) {
+        showToast('Gizli hayvan boş bırakılamaz', 'error');
+        return;
+    }
+
+    masterPassword = pass;
+    secretAnimal = newAnimal.toLowerCase();
+    entries = [];
+    saveData();
+    
+    document.getElementById('resetPasswordForm').reset();
+    document.getElementById('recoveryForm').reset();
+    document.getElementById('recoveryStep1').classList.remove('hidden');
+    document.getElementById('recoveryStep2').classList.add('hidden');
+    
+    showToast('Ana şifre sıfırlandı! Eski kayıtlar kurtarılamadı.', 'warning');
+    showScreen('mainApp');
+    renderEntries();
+});
+
+        // ===================== ENTRIES =====================
+        function renderEntries(filter = '') {
+            const list = document.getElementById('entriesList');
+            const empty = document.getElementById('emptyState');
+            const countEl = document.getElementById('entryCount');
+
+            let filtered = entries;
+            if (filter) {
+                const f = filter.toLowerCase();
+                filtered = entries.filter(e =>
+                    e.platform.toLowerCase().includes(f) ||
+                    e.username.toLowerCase().includes(f)
+                );
+            }
+
+            countEl.textContent = `${filtered.length} kayıt`;
+
+            if (filtered.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            list.innerHTML = filtered.map((entry, i) => {
+                const masked = '•'.repeat(Math.min(entry.password.length, 16));
+                return `
+                <div class="entry-card bg-[#141a16] border border-[#232d27] rounded-2xl p-4 sm:p-5 anim-slide-right delay-${(i % 4) + 1}" data-id="${entry.id}">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="w-8 h-8 rounded-lg bg-[#1f2822] border border-[#232d27] flex items-center justify-center text-[#1DB954] shrink-0">
+                                    <i class="fa-solid fa-globe text-xs"></i>
+                                </div>
+                                <h3 class="font-semibold text-[#e8ece9] truncate">${escapeHtml(entry.platform)}</h3>
+                            </div>
+                            <p class="text-sm text-[#9ba8a0] ml-10 truncate">${escapeHtml(entry.username)}</p>
+                            <div class="ml-10 mt-1.5 flex items-center gap-2">
+                                <span class="text-sm text-[#5e6e64] font-mono password-display" data-pwd="${escapeHtml(entry.password)}">${masked}</span>
+                                <button type="button" onclick="togglePasswordVisibility('${entry.id}')" class="text-[#5e6e64] hover:text-[#9ba8a0] transition-colors text-xs" title="Göster/Gizle">
+                                    <i class="fa-solid fa-eye toggle-eye-${entry.id}"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="copyPassword('${entry.id}')" class="w-8 h-8 rounded-lg bg-[#1a211c] border border-[#232d27] text-[#9ba8a0] hover:text-[#1DB954] hover:border-[#2d3a32] flex items-center justify-center transition-all" title="Şifreyi kopyala">
+                                <i class="fa-solid fa-copy text-xs"></i>
+                            </button>
+                            <button type="button" onclick="openEditModal('${entry.id}')" class="w-8 h-8 rounded-lg bg-[#1a211c] border border-[#232d27] text-[#9ba8a0] hover:text-[#3498db] hover:border-[#2d3a32] flex items-center justify-center transition-all" title="Düzenle">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button type="button" onclick="openDeleteModal('${entry.id}')" class="w-8 h-8 rounded-lg bg-[#1a211c] border border-[#232d27] text-[#9ba8a0] hover:text-[#e74c3c] hover:border-[#2d3a32] flex items-center justify-center transition-all" title="Sil">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function togglePasswordVisibility(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            const card = document.querySelector(`[data-id="${id}"]`);
+            const display = card.querySelector('.password-display');
+            const eye = card.querySelector(`.toggle-eye-${id}`);
+            if (display.textContent.includes('•')) {
+                display.textContent = entry.password;
+                eye.classList.remove('fa-eye');
+                eye.classList.add('fa-eye-slash');
+            } else {
+                display.textContent = '•'.repeat(Math.min(entry.password.length, 16));
+                eye.classList.remove('fa-eye-slash');
+                eye.classList.add('fa-eye');
+            }
+        }
+
+        function copyPassword(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(entry.password).then(() => {
+                    showToast('Şifre kopyalandı!', 'success');
+                }).catch(() => {
+                    fallbackCopy(entry.password, 'Şifre kopyalandı!');
+                });
+            } else {
+                fallbackCopy(entry.password, 'Şifre kopyalandı!');
+            }
+        }
+
+        document.getElementById('addEntryForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const platform = document.getElementById('entryPlatform').value.trim();
+            const username = document.getElementById('entryUsername').value.trim();
+            const password = document.getElementById('entryPassword').value;
+
+            if (!platform || !username || !password) {
+                showToast('Tüm alanları doldurun', 'error');
+                return;
+            }
+
+            entries.push({
+                id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                platform,
+                username,
+                password
+            });
+
+            saveData();
+            renderEntries(document.getElementById('searchInput').value);
+            document.getElementById('addEntryForm').reset();
+            document.getElementById('entryStrengthContainer').classList.add('hidden');
+            showToast('Kayıt eklendi!', 'success');
+        });
+
+        document.getElementById('clearFormBtn').addEventListener('click', () => {
+            document.getElementById('addEntryForm').reset();
+            document.getElementById('entryStrengthContainer').classList.add('hidden');
+        });
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            renderEntries(e.target.value);
+        });
+
+        document.getElementById('toggleEntryPassword').addEventListener('click', () => {
+            const input = document.getElementById('entryPassword');
+            const icon = document.getElementById('toggleEntryPassword').querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        document.getElementById('entryPassword').addEventListener('input', (e) => {
+            const val = e.target.value;
+            const container = document.getElementById('entryStrengthContainer');
+            if (!val) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            const result = calculateStrength(val);
+            updateStrengthUI(result, 'entryStrengthBar', 'entryStrengthText', null);
+        });
+
+        // ===================== EDIT / DELETE =====================
+        function openEditModal(id) {
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            document.getElementById('editId').value = id;
+            document.getElementById('editPlatform').value = entry.platform;
+            document.getElementById('editUsername').value = entry.username;
+            document.getElementById('editPassword').value = entry.password;
+            document.getElementById('editPassword').type = 'password';
+            document.getElementById('editEyeIcon').classList.remove('fa-eye-slash');
+            document.getElementById('editEyeIcon').classList.add('fa-eye');
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        function toggleEditPassword() {
+            const input = document.getElementById('editPassword');
+            const icon = document.getElementById('editEyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        document.getElementById('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const entry = entries.find(e => e.id === id);
+            if (!entry) return;
+            entry.platform = document.getElementById('editPlatform').value.trim();
+            entry.username = document.getElementById('editUsername').value.trim();
+            entry.password = document.getElementById('editPassword').value;
+            saveData();
+            renderEntries(document.getElementById('searchInput').value);
+            closeEditModal();
+            showToast('Kayıt güncellendi!', 'success');
+        });
+
+        function openDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            deleteId = null;
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+            if (!deleteId) return;
+            entries = entries.filter(e => e.id !== deleteId);
+            saveData();
+            renderEntries(document.getElementById('searchInput').value);
+            closeDeleteModal();
+            showToast('Kayıt silindi!', 'success');
+        });
+
+        // ===================== PASSWORD GENERATOR =====================
+        const CHARS = {
+            upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lower: 'abcdefghijklmnopqrstuvwxyz',
+            number: '0123456789',
+            symbol: '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        };
+
+        function generatePassword() {
+            const length = parseInt(document.getElementById('lengthSlider').value);
+            const useUpper = document.getElementById('optUpper').checked;
+            const useLower = document.getElementById('optLower').checked;
+            const useNumber = document.getElementById('optNumber').checked;
+            const useSymbol = document.getElementById('optSymbol').checked;
+
+            let pool = '';
+            if (useUpper) pool += CHARS.upper;
+            if (useLower) pool += CHARS.lower;
+            if (useNumber) pool += CHARS.number;
+            if (useSymbol) pool += CHARS.symbol;
+
+            if (!pool) {
+    document.getElementById('pwd').value = '';
+    updateStrengthUI({ percent: 0, label: 'Seçenek Yok', color: '#e74c3c' }, 'strengthFill', 'strengthLabel', 'strengthPercent');
+    showToast('En az bir karakter türü seçmelisiniz!', 'warning');
+    return;
+}
+
+            let password = '';
+            const array = new Uint32Array(length);
+            crypto.getRandomValues(array);
+            for (let i = 0; i < length; i++) {
+                password += pool[array[i] % pool.length];
+            }
+
+            document.getElementById('pwd').value = password;
+            const result = calculateStrength(password);
+            updateStrengthUI(result, 'strengthFill', 'strengthLabel', 'strengthPercent');
+        }
+
+        function calculateStrength(password) {
+            let score = 0;
+            if (password.length >= 8) score += 10;
+            if (password.length >= 12) score += 10;
+            if (password.length >= 16) score += 10;
+            if (password.length >= 20) score += 10;
+            if (/[A-Z]/.test(password)) score += 15;
+            if (/[a-z]/.test(password)) score += 15;
+            if (/[0-9]/.test(password)) score += 15;
+            if (/[^A-Za-z0-9]/.test(password)) score += 15;
+
+            let label = 'Çok Zayıf';
+            let color = '#e74c3c';
+            if (score >= 90) { label = 'Çok Güçlü'; color = '#1DB954'; }
+            else if (score >= 70) { label = 'Güçlü'; color = '#22c55e'; }
+            else if (score >= 50) { label = 'Orta'; color = '#f1c40f'; }
+            else if (score >= 30) { label = 'Zayıf'; color = '#f59e0b'; }
+
+            return { percent: Math.min(score, 100), label, color };
+        }
+
+        function updateStrengthUI(result, barId, labelId, percentId) {
+            const bar = document.getElementById(barId);
+            const label = document.getElementById(labelId);
+            if (percentId) {
+                document.getElementById(percentId).textContent = result.percent + '%';
+            }
+            bar.style.width = result.percent + '%';
+            bar.style.backgroundColor = result.color;
+            label.textContent = result.label;
+            label.style.color = result.color;
+        }
+
+        function updateSliderFill() {
+            const slider = document.getElementById('lengthSlider');
+            const min = slider.min || 0;
+            const max = slider.max || 100;
+            const val = (slider.value - min) / (max - min) * 100;
+            slider.style.setProperty('--fill', val + '%');
+            document.getElementById('lengthValue').textContent = slider.value + ' karakter';
+        }
+
+        document.getElementById('lengthSlider').addEventListener('input', () => {
+            updateSliderFill();
+            generatePassword();
+        });
+
+        ['optUpper', 'optLower', 'optNumber', 'optSymbol'].forEach(id => {
+    document.getElementById(id).addEventListener('change', function(e) {
+        const upper = document.getElementById('optUpper').checked;
+        const lower = document.getElementById('optLower').checked;
+        const number = document.getElementById('optNumber').checked;
+        const symbol = document.getElementById('optSymbol').checked;
+        
+        if (!upper && !lower && !number && !symbol) {
+            e.target.checked = true;
+            showToast('En az bir karakter türü seçilmelidir!', 'warning');
+            return;
+        }
+        
+        generatePassword();
+    });
+});
+
+        document.getElementById('regenBtn').addEventListener('click', () => {
+            generatePassword();
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const pwd = document.getElementById('pwd').value;
+            if (!pwd) return;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(pwd).then(() => {
+                    showToast('Parola kopyalandı!', 'success');
+                }).catch(() => {
+                    fallbackCopy(pwd, 'Parola kopyalandı!');
+                });
+            } else {
+                fallbackCopy(pwd, 'Parola kopyalandı!');
+            }
+        });
+
+        // ===================== MODAL =====================
+        function openGeneratorModal(fromButton = true) {
+            modalReturnTarget = fromButton ? 'entry' : 'nav';
+            const modal = document.getElementById('generatorModal');
+            const saveBtn = document.getElementById('saveAndReturnBtn');
+
+            if (fromButton) {
+                saveBtn.classList.remove('hidden');
+            } else {
+                saveBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            updateSliderFill();
+            generatePassword();
+        }
+
+        function closeGeneratorModal() {
+            document.getElementById('generatorModal').classList.add('hidden');
+            modalReturnTarget = null;
+        }
+
+        document.getElementById('openGeneratorBtn').addEventListener('click', () => {
+            openGeneratorModal(true);
+        });
+
+        document.getElementById('navGeneratorBtn').addEventListener('click', () => {
+            openGeneratorModal(false);
+        });
+
+        document.getElementById('closeModalBtn').addEventListener('click', closeGeneratorModal);
+        document.getElementById('generatorBackdrop').addEventListener('click', closeGeneratorModal);
+
+        document.getElementById('saveAndReturnBtn').addEventListener('click', () => {
+            const pwd = document.getElementById('pwd').value;
+            if (!pwd) return;
+            document.getElementById('entryPassword').value = pwd;
+            document.getElementById('entryPassword').dispatchEvent(new Event('input'));
+            closeGeneratorModal();
+            showToast('Şifre forma aktarıldı!', 'success');
+        });
+
+        document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (!document.getElementById('generatorModal').classList.contains('hidden')) {
+            closeGeneratorModal();
+        }
+        if (!document.getElementById('editModal').classList.contains('hidden')) {
+            closeEditModal();
+        }
+        if (!document.getElementById('deleteModal').classList.contains('hidden')) {
+            closeDeleteModal();
+        }
+        if (!document.getElementById('backupModal').classList.contains('hidden')) {
+            closeBackupModal();
+        }
+        if (!document.getElementById('restoreModal').classList.contains('hidden')) {
+             closeRestoreModal();
+        }
+    }
+});
+
+        // ===================== LOCK BUTTON =====================
+        document.getElementById('lockBtn').addEventListener('click', () => {
+            masterPassword = '';
+            entries = [];
+            document.getElementById('searchInput').value = '';
+            showScreen('lockScreen');
+        });
+
+// ===================== BACKUP / RESTORE =====================
+function openBackupModal() {
+    if (entries.length === 0) {
+        showToast('Yedeklenecek kayıt bulunamadı!', 'warning');
+        return;
+    }
+    
+    const backupData = {
+        version: '1.0',
+        date: new Date().toISOString(),
+        secretAnimal: secretAnimal,
+        entryCount: entries.length,
+        entries: entries.map(e => ({
+            platform: e.platform,
+            username: e.username,
+            password: e.password
+        }))
+    };
+    
+    document.getElementById('backupTextArea').value = JSON.stringify(backupData, null, 2);
+    document.getElementById('backupModal').classList.remove('hidden');
+}
+
+function closeBackupModal() {
+    document.getElementById('backupModal').classList.add('hidden');
+}
+
+document.getElementById('backupBtn').addEventListener('click', openBackupModal);
+
+document.getElementById('copyBackupBtn').addEventListener('click', () => {
+    const text = document.getElementById('backupTextArea').value;
+    if (!text) return;
+    
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Yedek panoya kopyalandı!', 'success');
+        }).catch(() => {
+            fallbackCopy(text, 'Yedek panoya kopyalandı!');
+        });
+    } else {
+        fallbackCopy(text, 'Yedek panoya kopyalandı!');
+    }
+});
+
+document.getElementById('downloadBackupBtn').addEventListener('click', () => {
+    const text = document.getElementById('backupTextArea').value;
+    if (!text) return;
+    
+    const blob = new Blob([text], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `FK_Yedek_${new Date().toISOString().slice(0, 10)}.fkbackup`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Yedek indiriliyor...', 'info');
+});
+
+// --- RESTORE ---
+function openRestoreModal() {
+    document.getElementById('restoreTextArea').value = '';
+    document.getElementById('restoreModal').classList.remove('hidden');
+}
+
+function closeRestoreModal() {
+    document.getElementById('restoreModal').classList.add('hidden');
+}
+
+function processRestoreData(jsonText) {
+    try {
+        const backupData = JSON.parse(jsonText);
+        
+        if (!backupData.entries || !Array.isArray(backupData.entries)) {
+            throw new Error('Geçersiz yedek verisi');
+        }
+        
+        const entryCount = backupData.entries.length;
+        
+        if (!confirm(`${entryCount} kayıt içeren yedek yüklenecek.\nMevcut kayıtlarınızın üzerine yazılacak.\n\nDevam etmek istiyor musunuz?`)) {
+            return;
+        }
+        
+        if (backupData.secretAnimal) {
+            secretAnimal = backupData.secretAnimal;
+        }
+        
+        entries = backupData.entries.map(entry => ({
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2) + Math.random().toString(36).substr(2),
+            platform: entry.platform || '',
+            username: entry.username || '',
+            password: entry.password || ''
+        })).filter(e => e.platform && e.username);
+        
+        saveData();
+        renderEntries(document.getElementById('searchInput').value);
+        showToast(`${entries.length} kayıt geri yüklendi!`, 'success');
+        closeRestoreModal();
+        
+    } catch (err) {
+        showToast('Geçersiz yedek metni! JSON formatı bozuk.', 'error');
+    }
+}
+
+document.getElementById('restoreBtn').addEventListener('click', () => {
+    openRestoreModal();
+});
+
+document.getElementById('confirmRestoreBtn').addEventListener('click', () => {
+    const text = document.getElementById('restoreTextArea').value.trim();
+    if (!text) {
+        showToast('Lütfen yedek metnini yapıştırın!', 'warning');
+        return;
+    }
+    processRestoreData(text);
+});
+
+document.getElementById('restoreFromFileBtn').addEventListener('click', () => {
+    document.getElementById('restoreFileInput').click();
+});
+
+document.getElementById('restoreFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        processRestoreData(event.target.result);
+        e.target.value = '';
+    };
+    reader.readAsText(file);
+});
+
+        // ===================== INIT =====================
+        checkSetup();
+    </script>
+</body>
+</html>
